@@ -1,0 +1,22 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Retrieve and display srv and qa pod information for your namespace${NC}"
+  echo
+  echo -e "${GREEN}Output:${NC}"
+  echo -e "  - Pod names and IP addresses for serving-api and qaclient pods"
+  echo -e "  - Information is filtered by your username ($USER_NAME)"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0)              Display pod information for default profile"
+  echo -e "  $(basename $0) --profile=dev    Display pod information for 'dev' profile"
+}
+
+init "$@"
+
+get_server_pod_info
+get_qaclient_pod_info

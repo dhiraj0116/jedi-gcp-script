@@ -1,0 +1,27 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: change_context [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Change Kubernetes context to the configured cluster${NC}"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  --force            Force context refresh, cleaning old context files"
+  echo -e "  --help             Display this help message"
+  echo
+  echo -e "${GREEN}Description:${NC}"
+  echo -e "  Connects to the GKE cluster specified in your profile using gke-connect."
+  echo -e "  Uses cached connection if still valid (within ${GREEN}${CONTEXT_EXPIRATION_SECONDS}${NC} seconds)."
+  echo -e "  Only reconnects if the role or context has changed, or cache has expired."
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  change_context             Connect using current profile settings"
+  echo -e "  change_context --force     Force reconnection, deleting cached context"
+}
+
+init "$@"
+
+ROLE=gke.ns.power.user
+change_context "$ARGS"

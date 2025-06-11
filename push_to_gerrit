@@ -1,0 +1,40 @@
+#!/bin/bash
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0)${NC}"
+  echo
+  echo -e "${GREEN}Update Gerrit with your current branch:${NC}"
+  echo -e "  - Rebases your current branch on master and pushes to Gerrit for review"
+  echo
+  echo -e "${GREEN}Requirements:${NC}"
+  echo -e "  - All changes must be committed before running this script."
+  echo -e "  - You must be on the branch you want to push (not 'master' or 'main')."
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0)"
+  exit 0
+}
+
+for arg in "$@"; do
+  if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+    print_usage
+  fi
+done
+
+CURRENT_BRANCH=$(git branch --show-current)
+
+if [[ "$CURRENT_BRANCH" == "master" || "$CURRENT_BRANCH" == "main" ]]; then
+  echo -e "${RED}Error: You must not run this script from the 'master' or 'main' branch.${NC}"
+  exit 1
+fi
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo -e "${RED}Error: You have uncommitted changes. Please commit or stash them before running this script.${NC}"
+  exit 1
+fi
+
+git checkout master
+git pull
+git checkout "$CURRENT_BRANCH"
+git rebase master
+git push gerrit HEAD:refs/for/master

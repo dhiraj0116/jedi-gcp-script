@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [options] [build_type]${NC}"
+  echo
+  echo -e "${GREEN}Build Options:${NC}"
+  echo -e "  build_type             Module to build (default: full)"
+  echo -e "  full, qa, sync, jws or artifactId if it's the same with module dir name"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -h, --help             Display this help message"
+  echo -e "  -et, --exclude-tests   Skip tests during build"
+  echo -e "  -sc, --skip-checkstyle Skip checkstyle during build"
+  echo -e "  -nr, --no-rpm          Skip RPM assembly during build"
+  echo -e "  -r=specify_module, --resume-from=specify_module      Resume build from specified module"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  build jws              Build only the web service module"
+  echo -e "  build full -et         Build everything without tests"
+  echo -e "  build -r=sync          Resume build from the sync module"
+  echo -e "  build full -sc         Build everything skipping checkstyle"
+  echo -e "  build full -nr         Build everything skipping rpm assembly"
+}
+
+init "$@"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -nr|--no-rpm)
+      ASSEMBLE_RPM=false
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+cd $PATH_TO_JEDI
+build
+if [ "${ASSEMBLE_RPM}" != "false" ]; then
+  assemble_rpm
+fi

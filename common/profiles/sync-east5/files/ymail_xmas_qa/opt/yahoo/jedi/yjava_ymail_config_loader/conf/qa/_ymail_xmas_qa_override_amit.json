@@ -1,0 +1,195 @@
+{
+    "Modules": {
+        "com.yahoo.mail.qa.common.config.TestGeneratedUriConfig": {
+            "_Sets_Type_": "COLO",
+            "_Sets_": [
+                {
+                    "key": [
+                        "ne1"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapUri": "imaps://jimap_ne1_invalid_1:993",
+                        "SyncUri": "https://sync_ne1_invalid_1:4443",
+                        "PopUri": "pops://jpop_ne1_invalid_1:9995",
+                        "DeliUri": "https://deli_ne1_invalid_1:4443",
+                        "McwsUri": "https://mcws_ne1_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_ne1_invalid_1:4443",
+                        "JcacheUri": "https://jcache_ne1_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapIntegrationUri": "https://jimap_ne1_invalid_1:8443",
+                        "SyncIntegrationUri": "https://sync_ne1_invalid_1:4443",
+                        "PopIntegrationUri": "https://jpop_ne1_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_ne1_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_ne1_invalid_1:4443",
+                        "JcfgIntegrationUri": "https://jcfg_ne1_invalid_1:4443",
+                        "JcacheIntegrationUri": "https://jcache_ne1_invalid_1:4443",
+                        "YserviceUri": "https://yserv_ne1_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_ne1_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_ne1_invalid_1:4443"
+                    }
+                },
+                {
+                    "key": [
+                        "bf1"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapUri": "imaps://jimap_bf1_invalid_1:993",
+                        "SyncUri": "https://sync_bf1_invalid_1:4443",
+                        "PopUri": "pops://jpop_bf1_invalid_1:9995",
+                        "DeliUri": "https://deli_bf1_invalid_1:4443",
+                        "McwsUri": "https://mcws_bf1_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_bf1_invalid_1:4443",
+                        "JcacheUri": "https://jcache_bf1_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapIntegrationUri": "https://jimap_bf1_invalid_1:8443",
+                        "SyncIntegrationUri": "https://sync_bf1_invalid_1:4443",
+                        "PopIntegrationUri": "https://jpop_bf1_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_bf1_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_bf1_invalid_1:4443",
+                        "JcfgIntegrationUri": "http://jcfg_bf1_invalid_1:80",
+                        "JcacheIntegrationUri": "https://jcache_bf1_invalid_1:4443",
+                        "YserviceUri": "https://yserv_bf1_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_bf1_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_bf1_invalid_1:4443"
+                    }
+                },
+                {
+                    "key": [
+                        "gq1"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapUri": "imaps://jimap_gq1_invalid_1:993",
+                        "SyncUri": "https://sync_gq1_invalid_1:4443",
+                        "PopUri": "pops://jpop_gq1_invalid_1:9995",
+                        "DeliUri": "https://deli_gq1_invalid_1:4443",
+                        "McwsUri": "https://mcws_gq1_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_gq1_invalid_1:4443",
+                        "JcacheUri": "https://jcache_gq1_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapIntegrationUri": "https://jimap_gq1_invalid_1:8443",
+                        "SyncIntegrationUri": "https://sync_gq1_invalid_1:4443",
+                        "PopIntegrationUri": "https://jpop_gq1_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_gq1_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_gq1_invalid_1:4443",
+                        "JcfgIntegrationUri": "http://jcfg_gq1_invalid_1:80",
+                        "JcacheIntegrationUri": "https://jcache_gq1_invalid_1:4443",
+                        "YserviceUri": "https://yserv_gq1_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_gq1_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_gq1_invalid_1:4443"
+                    }
+                },
+                {
+                    "key": [
+                        "ir2"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapUri": "imaps://jimap_ir2_invalid_1:993",
+                        "SyncUri": "https://sync_ir2_invalid_1:4443",
+                        "PopUri": "pops://jpop_ir2_invalid_1:9995",
+                        "DeliUri": "https://deli_ir2_invalid_1:4443",
+                        "McwsUri": "https://mcws_ir2_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_ir2_invalid_1:4443",
+                        "JcacheUri": "https://jcache_ir2_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapIntegrationUri": "https://jimap_ir2_invalid_1:8443",
+                        "SyncIntegrationUri": "https://sync_ir2_invalid_1:4443",
+                        "PopIntegrationUri": "https://jpop_ir2_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_ir2_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_ir2_invalid_1:4443",
+                        "JcfgIntegrationUri": "http://jcfg_ir2_invalid_1:80",
+                        "JcacheIntegrationUri": "https://jcache_ir2_invalid_1:4443",
+                        "YserviceUri": "https://yserv_ir2_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_ir2_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_ir2_invalid_1:4443"
+                    }
+                },
+                {
+                    "key": [
+                        "sg3"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapUri": "imaps://jimap_sg3_invalid_1:993",
+                        "SyncUri": "https://sync_sg3_invalid_1:4443",
+                        "PopUri": "pops://jpop_sg3_invalid_1:9995",
+                        "DeliUri": "https://deli_sg3_invalid_1:4443",
+                        "McwsUri": "https://mcws_sg3_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_sg3_invalid_1:4443",
+                        "JcacheUri": "https://jcache_sg3_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud:4443",
+                        "JimapIntegrationUri": "https://jimap_sg3_invalid_1:8443",
+                        "SyncIntegrationUri": "https://sync_sg3_invalid_1:4443",
+                        "PopIntegrationUri": "https://jpop_sg3_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_sg3_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_sg3_invalid_1:4443",
+                        "JcfgIntegrationUri": "http://jcfg_sg3_invalid_1:80",
+                        "JcacheIntegrationUri": "https://jcache_sg3_invalid_1:4443",
+                        "YserviceUri": "https://yserv_sg3_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_sg3_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_sg3_invalid_1:4443"
+                    }
+                }, {
+                    "key": [
+                        "us-east1",
+                        "us-east4",
+                        "us-east5",
+                        "us-west1",
+                        "us-west2",
+                        "us-west4"
+                    ],
+                    "keyList": {
+                        "IsOverwritten" : true,
+                        "JwsUri": "https://jws_pld_invalid_1:4443",
+                        "JimapUri": "imaps://jimap_pld_invalid_1:9993",
+                        "SyncUri": "https://syncaol.serving-api.mail-serving-sync-dev.gcp.yahoo.cloud:4443",
+                        "PopUri": "pops://jpop_pld_invalid_1:9995",
+                        "DeliUri": "https://deli_pld_invalid_1:4443",
+                        "McwsUri": "https://mcws_pld_invalid_1:4443",
+                        "JcfgUri": "https://jcfg_pld_invalid_1:4443",
+                        "JcacheUri": "https://jcache_pld_invalid_1:4443",
+                        "JwsIntegrationUri": "https://jws_pld_invalid_1:4443",
+                        "JimapIntegrationUri": "https://jimap_pld_invalid_1:8443",
+                        "SyncIntegrationUri": "https://syncaol.serving-api.mail-serving-sync-dev.gcp.yahoo.cloud:4443",
+                        "PopIntegrationUri": "https://jpop_pld_invalid_1:4443",
+                        "DeliIntegrationUri": "https://deli_pld_invalid_1:4443",
+                        "McwsIntegrationUri": "https://mcws_pld_invalid_1:4443",
+                        "JcfgIntegrationUri": "https://jcfg_pld_invalid_1:4443",
+                        "JcacheIntegrationUri": "https://jcache_pld_invalid_1:4443",
+                        "YserviceUri": "https://yserv_pld_invalid_1:4443",
+                        "YserviceOktaUri": "https://yserv_pld_invalid_1:4080",
+                        "YserviceIntegrationUri": "https://yserv_pld_invalid_1:4443"
+                    }
+                }
+            ],
+            "IsOverwritten" : false,
+            "JwsUri": "INVALID",
+            "SyncUri": "INVALID",
+            "JimapUri": "INVALID",
+            "PopUri": "INVALID",
+            "JcfgUri": "INVALID",
+            "DeliUri": "INVALID",
+            "McwsUri": "INVALID",
+            "JcacheUri": "INVALID",
+            "JwsIntegrationUri": "INVALID",
+            "SyncIntegrationUri": "INVALID",
+            "JimapIntegrationUri": "INVALID",
+            "PopIntegrationUri": "INVALID",
+            "JcfgIntegrationUri": "INVALID",
+            "DeliIntegrationUri": "INVALID",
+            "McwsIntegrationUri": "INVALID",
+            "JcacheIntegrationUri": "INVALID",
+            "YserviceUri": "INVALID",
+            "YserviceOktaUri": "INVALID",
+            "YserviceIntegrationUri": "INVALID"
+        }
+    }
+}

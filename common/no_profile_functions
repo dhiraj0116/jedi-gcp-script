@@ -1,0 +1,140 @@
+#!/bin/bash
+
+BG_GREEN=$(tput setab 2)
+GRAY=$(tput setaf 7)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+RED=$(tput setaf 1)
+NC=$(tput sgr0) # Reset
+
+# Function to copy files from a pod to local directory with progress indication
+# Parameters:
+#   $1: Pod name (required)
+#   $2: Source directory in pod (required)
+#   $3: Target local directory (required)
+#   $4: Strip components level (optional, default: 4)
+copy_dir_from_pod() {
+  local pod_name="$1"
+  local source_dir="$2"
+  local target_dir="$3"
+  local strip_components="${4:-4}"
+
+  echo ""
+  echo "copying logs from $pod_name:$source_dir to -- $target_dir ..."
+  mkdir -p "$target_dir"
+
+  if command -v pv > /dev/null 2>&1; then
+    kubectl exec "$pod_name" -- tar cf - "$source_dir" | pv | tar xf - -C "$target_dir" --strip-components="$strip_components"
+  else
+    echo "${YELLOW}if you want see transfer speed do 'brew install pv'.${NC}"
+    kubectl exec "$pod_name" -- tar cf - "$source_dir" | tar xf - -C "$target_dir" --strip-components="$strip_components"
+  fi
+}
+
+push_to_pod() {
+  local source_path=$1
+  local pod_name=$2
+  local destination_path=$3
+  local file_name
+  file_name=$(basename "$source_path")
+
+  # Check if the source file exists
+  if [ ! -f "$source_path" ]; then
+    echo "${RED}ERROR: Source file $source_path not found. Exiting."
+    exit 1
+  fi
+
+  echo ""
+  echo "Copying file: $file_name to pod: $pod_name at destination: $destination_path ..."
+
+  if command -v pv > /dev/null 2>&1; then
+    tar cf - -C "$(dirname "$source_path")" "$file_name" | pv | kubectl exec -i "$pod_name" -- tar xf - -C "$destination_path"
+  else
+    echo "${YELLOW}if you want see transfer speed do 'brew install pv'.${NC}"
+    kubectl cp "$source_path" "$pod_name:$destination_path"
+  fi
+}
+
+log_dump() {
+  # Default LOG_DIRECTORY to current directory if not specified
+  if [ -z "$GCP_SCRIPTS_RUN_TIMESTAMP" ]; then
+    GCP_SCRIPTS_RUN_TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+  fi
+  LOG_DIRECTORY="$(pwd)/log_dump/"
+
+  # Default GCP_SCRIPTS_RUN to false
+  GCP_SCRIPTS_RUN=false
+
+  # Declare the PODS array
+  PODS=()
+
+  # Process arguments
+  for arg in "$@"; do
+    if [[ "$arg" == --log-dir=* ]]; then
+      LOG_DIRECTORY="${arg#--log-dir=}"
+    elif [[ "$arg" == --gcp-scripts-run=* ]]; then
+      GCP_SCRIPTS_RUN="${arg#--gcp-scripts-run=}"
+    else
+      # Add any non-option argument to PODS array
+      PODS+=("$arg")
+    fi
+  done
+
+  mkdir -p "$LOG_DIRECTORY"
+  TESTLOG_FOLDER="$LOG_DIRECTORY$GCP_SCRIPTS_RUN_TIMESTAMP/"
+  mkdir -p "$TESTLOG_FOLDER"
+
+  # Iterate through $PODS and for each, run the test below
+  for arg in "${PODS[@]}"; do
+    # Execute command and store result in a variable
+    RESULT=$(kubectl exec $arg -- sh -c -- supervisorctl status jedi_jetty 2>/dev/null)
+
+    # Check the result with an if-else statement
+    if echo "$RESULT" | grep -q "jedi_jetty"; then
+      echo "${YELLOW}jedi_jetty process exists. assuming it's server pod${NC}"
+      LOG_FOLDER="/opt/yahoo/log/jedi_jetty"
+      NEW_LOG_FOLDER="${LOG_FOLDER}_backup"
+      kubectl exec $arg -- sh -c "
+        mkdir -p $NEW_LOG_FOLDER &&
+        find /opt/yahoo/log/jedi_jetty -type f -name 'server.log.[0-9]*' -exec mv {} $NEW_LOG_FOLDER/ \;
+      " && echo "Moved numbered server logs to $NEW_LOG_FOLDER"
+
+      copy_dir_from_pod "$arg" "$LOG_FOLDER" "$TESTLOG_FOLDER/server/" 4
+      copy_dir_from_pod "$arg" "/opt/yahoo/jedi/yjava_ymail_config_loader/conf" "$TESTLOG_FOLDER/server-conf/" 4
+    else
+      echo "${YELLOW}jedi_jetty process does not exist. assuming it's qa pod${NC}"
+      copy_dir_from_pod "$arg" "/opt/yahoo/log/ymail_xmas_qa" "$TESTLOG_FOLDER/qa/" 4
+      #find in qa folder emailable-report.html file path and save in parameter
+      EMAILABLE_REPORT_PATH=$(find "$TESTLOG_FOLDER/qa/" -type f -name "emailable-report.html" 2>/dev/null)
+
+      if [ -n "$EMAILABLE_REPORT_PATH" ]; then
+        ln -s "$EMAILABLE_REPORT_PATH" "$TESTLOG_FOLDER/emailable-report.html"
+        echo "Symbolic link created for emailable-report.html"
+      else
+        echo "emailable-report.html not found"
+      fi
+    fi
+  done
+
+  # Only copy GCP scripts configuration if GCP_SCRIPTS_RUN is true
+  if [ "$GCP_SCRIPTS_RUN" = "true" ]; then
+    # store K8S_GET_PODS_CONTEXT CONTEXT_DIR end env output in "$TESTLOG_FOLDER/gcp-scripts-conf/"
+    mkdir -p "$TESTLOG_FOLDER/gcp-scripts-conf/"
+    cp -r "$CONTEXT_DIR" "$TESTLOG_FOLDER/gcp-scripts-conf/"
+    env >> "$TESTLOG_FOLDER/gcp-scripts-conf/env.txt"
+  fi
+
+  BASENAME_WITH_ZIP="$(basename "$TESTLOG_FOLDER")"
+  if [[ "$BASENAME_WITH_ZIP" != *.zip ]]; then
+    BASENAME_WITH_ZIP="${BASENAME_WITH_ZIP}.zip"
+  fi
+
+  pwd
+  # Create the zip file, excluding the zip file itself
+  echo "Zipping $TESTLOG_FOLDER into $TESTLOG_FOLDER..."
+  (cd "$TESTLOG_FOLDER" && zip -r "$BASENAME_WITH_ZIP" . -x "$BASENAME_WITH_ZIP")
+  pwd
+
+  echo "${BG_GREEN}TESTLOG_FOLDER path: $TESTLOG_FOLDER${NC}"
+  echo "${GREEN}EMAILABLE_REPORT_PATH path: $EMAILABLE_REPORT_PATH${NC}"
+}

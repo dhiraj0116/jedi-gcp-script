@@ -1,0 +1,5 @@
+export GCP_REGION=us-east5
+export ENV_REGION=dev
+export ATHENZ_DOMAIN=mail.core.serving.jws.dev
+export GCP_CLUSTER_TYPE=mail-core
+export SERVER_POD_DNS_NAME=jwsyahoo.serving-api.mail-core-serving-jws-dev.gcp.yahoo.cloud

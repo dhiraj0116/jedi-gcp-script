@@ -1,0 +1,36 @@
+#!/bin/bash
+SCRIPT_DIR="$(dirname "$0")"
+source ${SCRIPT_DIR}/common/no_profile_functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [OPTIONS] [POD_NAMES...]${NC}"
+  echo
+  echo -e "${GREEN}Dump and collect logs from Kubernetes pods${NC}"
+  echo
+  echo -e "${GREEN}Arguments:${NC}"
+  echo -e "  POD_NAMES             One or more pod names to collect logs from, space separated"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -h, --help            Display this help message"
+  echo -e "  --log-dir=PATH        Specify custom log directory (default: ./log_dump/)"
+  echo
+  echo -e "${GREEN}Output:${NC}"
+  echo -e "  - Creates a timestamped directory with logs from each pod"
+  echo -e "  - Automatically identifies server vs QA pods and copies appropriate logs"
+  echo -e "  - Creates a zip file of all collected logs so you can easily share them"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0) devuser-ifedarau-qaclient-5f67cc674b-8hc85"
+  echo -e "  $(basename $0) devuser-ifedarau-serving-api-7ccd6dcd8d-jlwx9"
+  echo -e "  $(basename $0) --log-dir=/tmp/my-logs pod-name-1 pod-name-2"
+}
+
+# Check for help flag
+for arg in "$@"; do
+  if [[ "$arg" == "-h" ]] || [[ "$arg" == "--help" ]]; then
+    print_usage
+    exit 0
+  fi
+done
+
+log_dump "$@"

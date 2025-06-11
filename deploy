@@ -1,0 +1,62 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename "$0") POD_TYPE [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Deploy application to the specified pod type.${NC}"
+  echo
+  echo -e "${GREEN}Arguments:${NC}"
+  echo -e "  POD_TYPE              Pod type to deploy to (jws, qa, sync)"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -l=LEVEL, --ll=LEVEL, --log-level=LEVEL     Set log level (DEBUG|INFO|WARN|ERROR)"
+  echo -e "  -c, --c, --config-only                      Update configuration only, skip RPM installation"
+  echo -e "  -h, --help                                  Display this help message"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename "$0") qa --log-level=INFO"
+  echo -e "  $(basename "$0") jws --config-only"
+}
+
+init "$@"
+
+LOG_LEVEL="DEBUG"
+
+for arg in "${ARGS[@]}"; do
+  if [[ $arg == -l=* ]]; then
+    LOG_LEVEL="${arg#*=}"
+  elif [[ $arg == --ll=* ]]; then
+    LOG_LEVEL="${arg#*=}"
+  elif [[ $arg == --log-level=* ]]; then
+    LOG_LEVEL="${arg#*=}"
+  elif [[ $arg == "-c" || $arg == "--c" || $arg == "--config-only" ]]; then
+    CONFIG_ONLY="true"
+  fi
+done
+
+# Validate log level
+case "$LOG_LEVEL" in
+  DEBUG|INFO|WARN|ERROR)
+    ;;
+  *)
+    echo "Unrecognized log level: $LOG_LEVEL"
+    print_usage
+    exit 1
+    ;;
+esac
+
+ROLE=gke.ns.power.user
+change_context
+
+check_if_pod_type_is_in_line_with_domain
+
+if [ -n "$BUILD_TYPE" ] && [ "$BUILD_TYPE" != "ymail_xmas_qa" ]; then
+  deploy_server
+elif [ "$BUILD_TYPE" = "ymail_xmas_qa" ]; then
+  deploy_qa
+else
+  echo "Unknown build type: $BUILD_TYPE"
+  exit 1
+fi

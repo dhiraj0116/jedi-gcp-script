@@ -1,0 +1,158 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+BACKUP_DIR="/opt/yahoo/log/jedi_jetty"
+DATE=$(date +%Y%m%d%H%M%S)
+SUSPEND="LEAVE_AS_IS"
+CHANGE_PORT_TO="LEAVE_AS_IS"
+CLEAN_SERVER_LOGS=false
+GET_SERVER_LOGS=false
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Run integration tests on a QA client pod${NC}"
+  echo
+  echo -e "${GREEN}Required:${NC}"
+  echo -e "  --exec-id=<id>        Set the execution ID for the test run"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -h, --help            Display this help message"
+  echo -e "  --test-package=<pkg>  Specify test package to run (default: ALL)"
+  echo -e "  --suspend=<y/n>       Enable debug in suspend mode (default: leave as is)"
+  echo -e "  --port=<port>         Specify debug port number (default: leave as is)"
+  echo -e "  --clean-server-logs, -csl  Clean server logs before running tests"
+  echo -e "  --get-server-logs, -gsl    Retrieve server logs after running tests"
+  echo -e "  --profile=<name>      Specify profile to use (default: from config)"
+  echo
+  echo -e "${GREEN}Output:${NC}"
+  echo -e "  - Test results will be stored in log directory"
+  echo -e "  - Server logs will be collected if requested"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0) --exec-id=test123"
+  echo -e "  $(basename $0) --exec-id=test123 --test-package=com.yahoo.jedi.tests.MyTest"
+  echo -e "  $(basename $0) --exec-id=test123 --suspend=y --port=5005 --clean-server-logs"
+}
+
+for arg in "$@"; do
+  case $arg in
+    --exec-id=*)
+      JEDI_IT_EXEC_ID="${arg#*=}"
+      export JEDI_IT_EXEC_ID="$JEDI_IT_EXEC_ID"
+      ;;
+    --test-package=*)
+      JEDI_IT_TEST_PACKAGE="${arg#*=}"
+      export JEDI_IT_TEST_PACKAGE="$JEDI_IT_TEST_PACKAGE"
+      ;;
+    --suspend=*)
+      SUSPEND="${arg#*=}"
+      ;;
+    --port=*)
+      CHANGE_PORT_TO="${arg#*=}"
+      ;;
+    --clean-server-logs|-clean-server-logs|--csl|-csl)
+      CLEAN_SERVER_LOGS=true
+      GET_SERVER_LOGS=true
+      ;;
+    --get-server-logs|--gsl|-get-server-logs|-gsl)
+      GET_SERVER_LOGS=true
+      ;;
+  esac
+done
+
+init "$@"
+
+if [ -z $JEDI_IT_EXEC_ID ]; then
+  echo "Execution ID is required."
+  exit 1
+fi
+
+if [ -n "$JEDI_IT_TEST_PACKAGE" ]; then
+    echo "Test Package: $JEDI_IT_TEST_PACKAGE"
+  else
+    echo "Test Package: ALL"
+fi
+
+ROLE=gke.ns.power.user
+change_context
+get_server_pod_info
+get_qaclient_pod_info
+
+# Check if hosts entry exists and exit if not found
+echo "Checking for ${SERVER_POD_DNS_NAME} in /etc/hosts..."
+if ! kubectl exec ${QACLIENT_POD_NAME} -- bash -c "
+  if grep -q \"${SERVER_POD_DNS_NAME}\" /etc/hosts; then
+    # Entry found, remain silent and exit successfully
+    exit 0
+  else
+    echo \"ERROR: Entry for ${SERVER_POD_DNS_NAME} not found in /etc/hosts\" >&2
+    echo \"Current /etc/hosts content:\" >&2
+    cat /etc/hosts >&2
+    exit 1
+  fi
+"; then
+  echo "$(tput setaf 1)ERROR: Missing required hosts entry for ${SERVER_POD_DNS_NAME}.$(tput sgr0) you need to re deploy"
+  echo "Please run the deploy script again"
+  exit 1
+fi
+
+echo "Hosts entry verification successful, continuing..."
+
+if [ "$SUSPEND" = "LEAVE_AS_IS" ]; then
+  echo "SUSPEND is set to LEAVE_AS_IS. No action taken."
+else
+  echo "Setting debug suspend to $SUSPEND and port to $CHANGE_PORT_TO"
+  toggle_debug qa --suspend="$SUSPEND" --port="$CHANGE_PORT_TO"
+fi
+
+if [ "$CLEAN_SERVER_LOGS" = true ]; then
+  restart_server true
+fi
+
+echo "Killing any old test processes ..."
+set +e
+kubectl exec $QACLIENT_POD_NAME -- bash -c "pkill -9 -f java"
+set -e
+
+echo "Running test $JEDI_IT_TEST_PACKAGE..."
+kubectl exec $QACLIENT_POD_NAME -- bash -c "WORKLOAD=devuser /scripts/run_test.sh $JEDI_IT_EXEC_ID $JEDI_IT_TEST_PACKAGE"
+echo "Done."
+
+TEST_PACKAGE=$(echo "$JEDI_IT_TEST_PACKAGE" | grep -v '#' | cut -d'=' -f2)
+
+# Split the string by dots and store in an array
+IFS='.' read -ra parts <<< "$TEST_PACKAGE"
+
+# Get the length of the array
+length=${#parts[@]}
+
+TEST_CLASS_NAME_PREFIX=""
+
+# Iterate through the array in reverse order and stop at capital letter part
+for (( i=length-1; i>=0; i-- )); do
+    part="${parts[i]}"
+    echo "$part"
+    TEST_CLASS_NAME_PREFIX="$part/$TEST_CLASS_NAME_PREFIX"
+
+    # Check if part starts with uppercase letter and is not the last part
+    if [[ "$part" =~ ^[A-Z] ]] ; then
+        echo "Found part starting with capital letter: $part"
+        break
+    fi
+done
+
+YEAR=$(date +"%Y")
+MONTH=$(date +"%m")
+DAY=$(date +"%d")
+
+LOG_DIRECTORY="$FUNCTIONS_SCRIPT_DIR/log/$GCP_REGION/$GCP_CLUSTER_TYPE/$ATHENZ_DOMAIN/$YEAR/$MONTH/$DAY/$TEST_CLASS_NAME_PREFIX"
+ROLE=gke.ns.power.user
+change_context
+get_qaclient_pod_info
+log_dump "$QACLIENT_POD_NAME" --log-dir="$LOG_DIRECTORY" --gcp-scripts-run=true
+if [ "$GET_SERVER_LOGS" = true ]; then
+  get_server_pod_info
+  log_dump "$SERVER_POD_NAME"  --log-dir="$LOG_DIRECTORY" --gcp-scripts-run=true
+fi

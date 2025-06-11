@@ -1,0 +1,651 @@
+[
+  {
+    "aliases": [
+      "ymail_xmas_vip_config"
+    ],
+    "BUILD_TYPE": "ymail_xmas_vip_config",
+    "LOCAL_DIR": "vip_config"
+  },
+  {
+    "aliases": [
+      "config-syncgke"
+    ],
+    "BUILD_TYPE": "config-syncgke",
+    "LOCAL_DIR": "config/config-syncgke"
+  },
+  {
+    "aliases": [
+      "config-deligke"
+    ],
+    "BUILD_TYPE": "config-deligke",
+    "LOCAL_DIR": "config/config-deligke"
+  },
+  {
+    "aliases": [
+      "config-sync"
+    ],
+    "BUILD_TYPE": "config-sync",
+    "LOCAL_DIR": "config/config-sync"
+  },
+  {
+    "aliases": [
+      "config-jcache"
+    ],
+    "BUILD_TYPE": "config-jcache",
+    "LOCAL_DIR": "config/config-jcache"
+  },
+  {
+    "aliases": [
+      "config-mcws"
+    ],
+    "BUILD_TYPE": "config-mcws",
+    "LOCAL_DIR": "config/config-mcws"
+  },
+  {
+    "aliases": [
+      "config-common"
+    ],
+    "BUILD_TYPE": "config-common",
+    "LOCAL_DIR": "config/config-common"
+  },
+  {
+    "aliases": [
+      "config-jimap"
+    ],
+    "BUILD_TYPE": "config-jimap",
+    "LOCAL_DIR": "config/config-jimap"
+  },
+  {
+    "aliases": [
+      "confman"
+    ],
+    "BUILD_TYPE": "confman",
+    "LOCAL_DIR": "config"
+  },
+  {
+    "aliases": [
+      "config-jpop"
+    ],
+    "BUILD_TYPE": "config-jpop",
+    "LOCAL_DIR": "config/config-jpop"
+  },
+  {
+    "aliases": [
+      "config-old"
+    ],
+    "BUILD_TYPE": "config-old",
+    "LOCAL_DIR": "config/config-old"
+  },
+  {
+    "aliases": [
+      "config-jcachegke"
+    ],
+    "BUILD_TYPE": "config-jcachegke",
+    "LOCAL_DIR": "config/config-jcachegke"
+  },
+  {
+    "aliases": [
+      "config-jpopgke"
+    ],
+    "BUILD_TYPE": "config-jpopgke",
+    "LOCAL_DIR": "config/config-jpopgke"
+  },
+  {
+    "aliases": [
+      "config-jws"
+    ],
+    "BUILD_TYPE": "config-jws",
+    "LOCAL_DIR": "config/config-jws"
+  },
+  {
+    "aliases": [
+      "config-jcfg"
+    ],
+    "BUILD_TYPE": "config-jcfg",
+    "LOCAL_DIR": "config/config-jcfg"
+  },
+  {
+    "aliases": [
+      "config-jimapgke"
+    ],
+    "BUILD_TYPE": "config-jimapgke",
+    "LOCAL_DIR": "config/config-jimapgke"
+  },
+  {
+    "aliases": [
+      "config-mcwsgke"
+    ],
+    "BUILD_TYPE": "config-mcwsgke",
+    "LOCAL_DIR": "config/config-mcwsgke"
+  },
+  {
+    "aliases": [
+      "config-yserv"
+    ],
+    "BUILD_TYPE": "config-yserv",
+    "LOCAL_DIR": "config/config-yserv"
+  },
+  {
+    "aliases": [
+      "ci"
+    ],
+    "BUILD_TYPE": "ci",
+    "LOCAL_DIR": "ci"
+  },
+  {
+    "aliases": [
+      "scripts"
+    ],
+    "BUILD_TYPE": "scripts",
+    "LOCAL_DIR": "ci/scripts"
+  },
+  {
+    "aliases": [
+      "jedi"
+    ],
+    "BUILD_TYPE": "jedi",
+    "LOCAL_DIR": "/Users/ifedarau/workspace_ifedarau/jedi"
+  },
+  {
+    "aliases": [
+      "jcache_client"
+    ],
+    "BUILD_TYPE": "jcache_client",
+    "LOCAL_DIR": "libraries/jcache_client"
+  },
+  {
+    "aliases": [
+      "common_comms"
+    ],
+    "BUILD_TYPE": "common_comms",
+    "LOCAL_DIR": "libraries/common_comms"
+  },
+  {
+    "aliases": [
+      "cmd"
+    ],
+    "BUILD_TYPE": "cmd",
+    "LOCAL_DIR": "libraries/cmd"
+  },
+  {
+    "aliases": [
+      "appBase"
+    ],
+    "BUILD_TYPE": "appBase",
+    "LOCAL_DIR": "libraries/app_base"
+  },
+  {
+    "aliases": [
+      "sal"
+    ],
+    "BUILD_TYPE": "sal",
+    "LOCAL_DIR": "libraries/sal"
+  },
+  {
+    "aliases": [
+      "jedi_jetty_jedi_logger"
+    ],
+    "BUILD_TYPE": "jedi_jetty_jedi_logger",
+    "LOCAL_DIR": "libraries/logger"
+  },
+  {
+    "aliases": [
+      "ratelimiter"
+    ],
+    "BUILD_TYPE": "ratelimiter",
+    "LOCAL_DIR": "libraries/ratelimiter"
+  },
+  {
+    "aliases": [
+      "jersey_mime_partial"
+    ],
+    "BUILD_TYPE": "jersey_mime_partial",
+    "LOCAL_DIR": "libraries/jersey_mime_partial"
+  },
+  {
+    "aliases": [
+      "jimap_parser"
+    ],
+    "BUILD_TYPE": "jimap_parser",
+    "LOCAL_DIR": "libraries/jimap_parser"
+  },
+  {
+    "aliases": [
+      "common_filters"
+    ],
+    "BUILD_TYPE": "common_filters",
+    "LOCAL_DIR": "libraries/common_filters"
+  },
+  {
+    "aliases": [
+      "udb"
+    ],
+    "BUILD_TYPE": "udb",
+    "LOCAL_DIR": "libraries/udb"
+  },
+  {
+    "aliases": [
+      "webService_beans"
+    ],
+    "BUILD_TYPE": "webService_beans",
+    "LOCAL_DIR": "libraries/web_service_beans"
+  },
+  {
+    "aliases": [
+      "antispam.caliban"
+    ],
+    "BUILD_TYPE": "antispam.caliban",
+    "LOCAL_DIR": "libraries/antispam_caliban"
+  },
+  {
+    "aliases": [
+      "scheduler_beans"
+    ],
+    "BUILD_TYPE": "scheduler_beans",
+    "LOCAL_DIR": "libraries/scheduler_beans"
+  },
+  {
+    "aliases": [
+      "mail_beans"
+    ],
+    "BUILD_TYPE": "mail_beans",
+    "LOCAL_DIR": "libraries/mail_beans"
+  },
+  {
+    "aliases": [
+      "libs"
+    ],
+    "BUILD_TYPE": "libs",
+    "LOCAL_DIR": "libraries"
+  },
+  {
+    "aliases": [
+      "mcp_client"
+    ],
+    "BUILD_TYPE": "mcp_client",
+    "LOCAL_DIR": "libraries/mcp_client"
+  },
+  {
+    "aliases": [
+      "event_parser"
+    ],
+    "BUILD_TYPE": "event_parser",
+    "LOCAL_DIR": "libraries/event_parser"
+  },
+  {
+    "aliases": [
+      "yservice_beans"
+    ],
+    "BUILD_TYPE": "yservice_beans",
+    "LOCAL_DIR": "libraries/yservice_beans"
+  },
+  {
+    "aliases": [
+      "tap_beans"
+    ],
+    "BUILD_TYPE": "tap_beans",
+    "LOCAL_DIR": "libraries/tap_beans"
+  },
+  {
+    "aliases": [
+      "logger_data"
+    ],
+    "BUILD_TYPE": "logger_data",
+    "LOCAL_DIR": "libraries/logger_data"
+  },
+  {
+    "aliases": [
+      "common_test"
+    ],
+    "BUILD_TYPE": "common_test",
+    "LOCAL_DIR": "libraries/common_test"
+  },
+  {
+    "aliases": [
+      "common_yahoo"
+    ],
+    "BUILD_TYPE": "common_yahoo",
+    "LOCAL_DIR": "libraries/common_yahoo"
+  },
+  {
+    "aliases": [
+      "messageProcessor"
+    ],
+    "BUILD_TYPE": "messageProcessor",
+    "LOCAL_DIR": "libraries/messageprocessor"
+  },
+  {
+    "aliases": [
+      "blackbird"
+    ],
+    "BUILD_TYPE": "blackbird",
+    "LOCAL_DIR": "libraries/blackbird"
+  },
+  {
+    "aliases": [
+      "blackbird_tomcat_filter"
+    ],
+    "BUILD_TYPE": "blackbird_tomcat_filter",
+    "LOCAL_DIR": "libraries/blackbird/tomcat_filter"
+  },
+  {
+    "aliases": [
+      "jedi_api"
+    ],
+    "BUILD_TYPE": "jedi_api",
+    "LOCAL_DIR": "libraries/api"
+  },
+  {
+    "aliases": [
+      "trap_manager"
+    ],
+    "BUILD_TYPE": "trap_manager",
+    "LOCAL_DIR": "libraries/trap_manager"
+  },
+  {
+    "aliases": [
+      "event_worker_common"
+    ],
+    "BUILD_TYPE": "event_worker_common",
+    "LOCAL_DIR": "libraries/event_worker_common"
+  },
+  {
+    "aliases": [
+      "event_worker"
+    ],
+    "BUILD_TYPE": "event_worker",
+    "LOCAL_DIR": "libraries/event_worker"
+  },
+  {
+    "aliases": [
+      "jersey_mappers"
+    ],
+    "BUILD_TYPE": "jersey_mappers",
+    "LOCAL_DIR": "libraries/jersey_mappers"
+  },
+  {
+    "aliases": [
+      "beans_common"
+    ],
+    "BUILD_TYPE": "beans_common",
+    "LOCAL_DIR": "libraries/beans_common"
+  },
+  {
+    "aliases": [
+      "force"
+    ],
+    "BUILD_TYPE": "force",
+    "LOCAL_DIR": "libraries/force"
+  },
+  {
+    "aliases": [
+      "jmetric"
+    ],
+    "BUILD_TYPE": "jmetric",
+    "LOCAL_DIR": "libraries/jmetric"
+  },
+  {
+    "aliases": [
+      "common_mail"
+    ],
+    "BUILD_TYPE": "common_mail",
+    "LOCAL_DIR": "libraries/common_mail"
+  },
+  {
+    "aliases": [
+      "beans_jcache"
+    ],
+    "BUILD_TYPE": "beans_jcache",
+    "LOCAL_DIR": "libraries/beans_jcache"
+  },
+  {
+    "aliases": [
+      "jedi_policy"
+    ],
+    "BUILD_TYPE": "jedi_policy",
+    "LOCAL_DIR": "libraries/policy"
+  },
+  {
+    "aliases": [
+      "jedi_permissions"
+    ],
+    "BUILD_TYPE": "jedi_permissions",
+    "LOCAL_DIR": "libraries/jedi_permissions"
+  },
+  {
+    "aliases": [
+      "jedi_external_service"
+    ],
+    "BUILD_TYPE": "jedi_external_service",
+    "LOCAL_DIR": "apps/jedi_external_service"
+  },
+  {
+    "aliases": [
+      "jedi_jetty_sessions"
+    ],
+    "BUILD_TYPE": "jedi_jetty_sessions",
+    "LOCAL_DIR": "apps/jetty_sessions"
+  },
+  {
+    "aliases": [
+      "config_manager"
+    ],
+    "BUILD_TYPE": "config_manager",
+    "LOCAL_DIR": "apps/configuration/config_manager"
+  },
+  {
+    "aliases": [
+      "config"
+    ],
+    "BUILD_TYPE": "config",
+    "LOCAL_DIR": "apps/configuration"
+  },
+  {
+    "aliases": [
+      "yjava_ymail_config_loader"
+    ],
+    "BUILD_TYPE": "yjava_ymail_config_loader",
+    "LOCAL_DIR": "apps/configuration/config_loader"
+  },
+  {
+    "aliases": [
+      "jedi_linux_settings"
+    ],
+    "BUILD_TYPE": "jedi_linux_settings",
+    "LOCAL_DIR": "apps/jedi_linux_settings"
+  },
+  {
+    "aliases": [
+      "jedi_installer"
+    ],
+    "BUILD_TYPE": "jedi_installer",
+    "LOCAL_DIR": "apps/jedi_installer"
+  },
+  {
+    "aliases": [
+      "jedi_pop"
+    ],
+    "BUILD_TYPE": "jedi_pop",
+    "LOCAL_DIR": "apps/pop"
+  },
+  {
+    "aliases": [
+      "jedi_kubernetes"
+    ],
+    "BUILD_TYPE": "jedi_kubernetes",
+    "LOCAL_DIR": "apps/jedi_kubernetes"
+  },
+  {
+    "aliases": [
+      "jedi_app_setup"
+    ],
+    "BUILD_TYPE": "jedi_app_setup",
+    "LOCAL_DIR": "apps/jedi_app_setup"
+  },
+  {
+    "aliases": [
+      "jedi_yservice_web_service"
+    ],
+    "BUILD_TYPE": "jedi_yservice_web_service",
+    "LOCAL_DIR": "apps/yservice_web_service"
+  },
+  {
+    "aliases": [
+      "okta_service"
+    ],
+    "BUILD_TYPE": "okta_service",
+    "LOCAL_DIR": "apps/okta_service"
+  },
+  {
+    "aliases": [
+      "apps"
+    ],
+    "BUILD_TYPE": "apps",
+    "LOCAL_DIR": "apps"
+  },
+  {
+    "aliases": [
+      "jedi_admin_web_service"
+    ],
+    "BUILD_TYPE": "jedi_admin_web_service",
+    "LOCAL_DIR": "apps/admin_web_service"
+  },
+  {
+    "aliases": [
+      "jedi_jmetric"
+    ],
+    "BUILD_TYPE": "jedi_jmetric",
+    "LOCAL_DIR": "apps/jedi_jmetric"
+  },
+  {
+    "aliases": [
+      "qa_jws"
+    ],
+    "BUILD_TYPE": "qa_jws",
+    "LOCAL_DIR": "apps/qa/qa_jws"
+  },
+  {
+    "aliases": [
+      "qa_sync"
+    ],
+    "BUILD_TYPE": "qa_sync",
+    "LOCAL_DIR": "apps/qa/qa_sync"
+  },
+  {
+    "aliases": [
+      "ymail_xmas_qa",
+      "qa"
+    ],
+    "BUILD_TYPE": "ymail_xmas_qa",
+    "LOCAL_DIR": "apps/qa/qa_container"
+  },
+  {
+    "aliases": [
+      "qa_sky"
+    ],
+    "BUILD_TYPE": "qa_sky",
+    "LOCAL_DIR": "apps/qa/qa_sky"
+  },
+  {
+    "aliases": [
+      "qa_jpop"
+    ],
+    "BUILD_TYPE": "qa_jpop",
+    "LOCAL_DIR": "apps/qa/qa_jpop"
+  },
+  {
+    "aliases": [
+      "qa_common"
+    ],
+    "BUILD_TYPE": "qa_common",
+    "LOCAL_DIR": "apps/qa/qa_common"
+  },
+  {
+    "aliases": [
+      "qa_jcache"
+    ],
+    "BUILD_TYPE": "qa_jcache",
+    "LOCAL_DIR": "apps/qa/qa_jcache"
+  },
+  {
+    "aliases": [
+      "qa_yserv"
+    ],
+    "BUILD_TYPE": "qa_yserv",
+    "LOCAL_DIR": "apps/qa/qa_yserv"
+  },
+  {
+    "aliases": [
+      "qa_jcfg"
+    ],
+    "BUILD_TYPE": "qa_jcfg",
+    "LOCAL_DIR": "apps/qa/qa_jcfg"
+  },
+  {
+    "aliases": [
+      "jimap"
+    ],
+    "BUILD_TYPE": "jimap",
+    "LOCAL_DIR": "apps/jimap"
+  },
+  {
+    "aliases": [
+      "jcache"
+    ],
+    "BUILD_TYPE": "jcache",
+    "LOCAL_DIR": "apps/jcache"
+  },
+  {
+    "aliases": [
+      "jedi_jetty"
+    ],
+    "BUILD_TYPE": "jedi_jetty",
+    "LOCAL_DIR": "apps/jedi_jetty"
+  },
+  {
+    "aliases": [
+      "jedi_config_web_service"
+    ],
+    "BUILD_TYPE": "jedi_config_web_service",
+    "LOCAL_DIR": "apps/config_web_service"
+  },
+  {
+    "aliases": [
+      "ymail_xmas_sync",
+      "sync"
+    ],
+    "BUILD_TYPE": "ymail_xmas_sync",
+    "LOCAL_DIR": "apps/sync",
+    "athenz_domain_check": ".sync."
+  },
+  {
+    "athenz_domain_check": ".jws.",
+    "aliases": [
+      "ymail_xmas_web_service",
+      "jws"
+    ],
+    "BUILD_TYPE": "ymail_xmas_web_service",
+    "LOCAL_DIR": "apps/web_service"
+  },
+  {
+    "aliases": [
+      "jedi_external_jetty"
+    ],
+    "BUILD_TYPE": "jedi_external_jetty",
+    "LOCAL_DIR": "apps/jedi_external_jetty"
+  },
+  {
+    "aliases": [
+      "jsmtp"
+    ],
+    "BUILD_TYPE": "jsmtp",
+    "LOCAL_DIR": "apps/jsmtp"
+  },
+  {
+    "aliases": [
+      "jedi_jcache_web_service"
+    ],
+    "BUILD_TYPE": "jedi_jcache_web_service",
+    "LOCAL_DIR": "apps/jcache_web_service"
+  }
+]

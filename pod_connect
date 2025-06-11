@@ -1,0 +1,42 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [POD_TYPE] [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Connect to a shell in the specified pod type${NC}"
+  echo
+  echo -e "${GREEN}Arguments:${NC}"
+  echo -e "  POD_TYPE              Pod type to connect to (jws, sync, qa, or custom)"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -h, --help            Display this help message"
+  echo -e "  --profile=<name>      Specify profile to use (default: from config or 'default')"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0) jws    Connect to JWS pod shell"
+  echo -e "  $(basename $0) qa     Connect to QA client pod shell"
+  echo -e "  $(basename $0) sync   Connect to Sync service pod shell"
+  echo -e "  $(basename $0) custom Connect to custom pod by name"
+}
+
+init "$@"
+ROLE=gke.ns.power.user
+change_context
+
+check_if_pod_type_is_in_line_with_domain
+
+if [ "$POD_TYPE" = "jws" ] || [ "$POD_TYPE" = "sync" ]; then
+  get_server_pod_info
+  kubectl exec -it $SERVER_POD_NAME -- bash -c "export PS1='\[\e[1;35m\][serving-api]:\[\e[1;33m\]\w\$\[\e[0;1m\]'; exec bash"
+elif [ "$POD_TYPE" = "qa" ]; then
+  get_qaclient_pod_info
+  kubectl exec -it "$QACLIENT_POD_NAME" -- bash -c "export PS1='\[\e[1;32m\][qaclient]:\[\e[1;33m\]\w\$\[\e[0;1m\]'; exec bash"
+elif [ -n "$POD_TYPE" ]; then
+  get_pod_info POD_NAME POD_IP $POD_TYPE
+  kubectl exec -it "$POD_NAME" -- bash -c "export PS1='\[\e[1;32m\][${POD_TYPE}]:\[\e[1;33m\]\w\$\[\e[0;1m\]'; exec bash"
+else
+  echo please specify pod type with.
+  exit 1
+fi

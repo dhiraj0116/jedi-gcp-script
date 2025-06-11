@@ -1,0 +1,5 @@
+export GCP_REGION=us-west1
+export ENV_REGION=dev
+export ATHENZ_DOMAIN=mail.serving.sync.dev
+export GCP_CLUSTER_TYPE=mail-prx
+export SERVER_POD_DNS_NAME=export SERVER_POD_DNS_NAME="syncaol.serving-api.mail-serving-sync-dev.gcp.yahoo.cloud syncyahoo.serving-api.mail-serving-sync-dev.gcp.yahoo.cloud"

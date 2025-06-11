@@ -1,0 +1,632 @@
+#!/bin/bash
+
+source ./common/no_profile_functions
+
+# Instead of using $0 which only works when executed directly
+get_script_dir() {
+  local script_path
+  # BASH_SOURCE works even when the script is sourced
+  if [ -n "${BASH_SOURCE[0]}" ]; then
+    script_path="${BASH_SOURCE[0]}"
+  # For other shells like zsh that support $0 when sourced
+  elif [ -n "$ZSH_VERSION" ]; then
+    script_path="${0:A}"
+  # Fallback for sh and other shells
+  else
+    script_path="$0"
+  fi
+
+  # Convert to absolute path
+  if command -v realpath >/dev/null 2>&1; then
+    # Use realpath if available
+    dirname "$(realpath "$script_path")"
+  else
+    # Fallback to cd/pwd method
+    local oldpwd="$PWD"
+    cd "$(dirname "$script_path")" >/dev/null
+    local full_path="$PWD"
+    cd "$oldpwd" >/dev/null
+    echo "$full_path"
+  fi
+}
+
+get_pod_info() {
+  local pod_name_var=$1
+  local pod_ip_var=$2
+  local pod_search_string=$3
+
+  echo ""
+  echo "retrieving ${pod_search_string} pod info ..."
+
+  # Check if we need to fetch pods info
+  if [ ! -f "$K8S_GET_PODS_CONTEXT" ]; then
+    echo "Fetching pods information from kubectl..."
+    kubectl get pods -o json > "$K8S_GET_PODS_CONTEXT"
+  fi
+
+  # Use the cached pod information
+  POD_INFO=$(cat "$K8S_GET_PODS_CONTEXT" | jq -r ".items[] | select(.metadata.name | test(\"${pod_search_string}\")) | {name: .metadata.name, ip: .status.podIP}" | jq -s '.[0]')
+  local pod_name=$(echo "$POD_INFO" | jq -r '.name')
+  local pod_ip=$(echo "$POD_INFO" | jq -r '.ip')
+
+  if [ -z "$pod_name" ] || [ "$pod_name" = "null" ]; then
+    echo "${RED}${pod_search_string} pod not found for ${USER_NAME} are you connected to the right region?${NC}"
+    exit 1
+  else
+    echo "${GREEN}${pod_search_string} pod name: $pod_name${NC}"
+    echo "${GREEN}${pod_search_string} pod IP: $pod_ip${NC}"
+    eval $pod_name_var="'$pod_name'"
+    eval $pod_ip_var="'$pod_ip'"
+  fi
+}
+
+# Add a function to force refresh the pods cache
+refresh_pods_cache() {
+  echo "Refreshing pods cache..."
+  kubectl get pods -o json > "$K8S_GET_PODS_CONTEXT"
+  echo "Pods cache refreshed"
+}
+
+get_server_pod_info() {
+  local pod_search_string=$USER_NAME".*serving-api"
+  get_pod_info SERVER_POD_NAME SERVER_POD_IP "$pod_search_string"
+}
+
+get_qaclient_pod_info() {
+  local pod_search_string=$USER_NAME".*qaclient"
+  get_pod_info QACLIENT_POD_NAME QACLIENT_POD_IP "$pod_search_string"
+}
+
+check_g_token_expiration(){
+  # Get the current access token
+  ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+  # Get the token's expiration time
+  EXPIRATION_TIME=$(gcloud auth print-access-token --format=json | jq -r '.token_expiry')
+
+  # Get the current time in the same format as the expiration time
+  CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Compare the current time with the expiration time
+  if [ "$CURRENT_TIME" \< "$EXPIRATION_TIME" ]; then
+    echo "Token is still valid."
+  else
+    gcloud auth login
+  fi
+  ROLE=gke.ns.power.user
+  gke-connect -d ${ATHENZ_DOMAIN} -c ${GCP_CLUSTER_TYPE}-${GCP_REGION} -R ${ROLE}
+}
+
+change_context() {
+  local skip_prompt_if_set=${1:-true}
+  local current_time=$(date +%s)
+  local last_connected_time=0
+  local last_connected_context=""
+  local last_connected_role=""
+  local clean_pod_context=false
+
+  # Process arguments to check for --force-refresh and --help
+  FILTERED_ARGS=()
+  for arg in "${ARGS[@]}"; do
+    if [[ $arg == "--force" ]]; then
+      clean_pod_context=true
+      echo "${YELLOW}Force refresh enabled. Cleaning up old context files...${NC}"
+    elif [[ $arg == "--help" ]]; then
+      print_usage
+      return 0
+    else
+      FILTERED_ARGS+=("$arg")
+    fi
+  done
+  ARGS=("${FILTERED_ARGS[@]}")
+
+  if [ -f "$CONTEXT_FILE" ]; then
+    last_connected_time=$(awk -F'|' '{print $1}' "$CONTEXT_FILE")
+    last_connected_context=$(awk -F'|' '{print $2}' "$CONTEXT_FILE")
+    last_connected_role=$(awk -F'|' '{print $3}' "$CONTEXT_FILE")
+  fi
+
+  local current_context="${ATHENZ_DOMAIN}-${GCP_CLUSTER_TYPE}-${ENV_REGION}-${GCP_REGION}"
+  local reconnect=false
+
+
+  if [ "$current_context" = "$last_connected_context" ] && [ $((current_time - last_connected_time)) -lt ${CONTEXT_EXPIRATION_SECONDS} ]; then
+    if [ "$ROLE" != "$last_connected_role" ]; then
+      reconnect=true
+    fi
+  else
+    clean_pod_context=true
+    reconnect=true
+  fi
+
+  if [ "$reconnect" = true ] || [ "$clean_pod_context" = true ]; then
+    echo "Cleaning up old context files..."
+    rm -rf "$CONTEXT_FILE"
+    if [ "$clean_pod_context" = true ]; then
+      echo "Cleaning up old pod context files..."
+      rm -rf "$K8S_GET_PODS_CONTEXT"
+    fi
+    gke-connect -d ${ATHENZ_DOMAIN} -c ${GCP_CLUSTER_TYPE}-${ENV_REGION}-${GCP_REGION} -R ${ROLE}
+    if [ $? -ne 0 ]; then
+      set -x
+      echo "${RED}gke-connect failed, running yinit -h sshra-onprem.ops.yahoo.com -force${NC}"
+      yinit -h sshra-onprem.ops.yahoo.com -force
+      DEBUG=true gke-connect -d ${ATHENZ_DOMAIN} -c ${GCP_CLUSTER_TYPE}-${ENV_REGION}-${GCP_REGION} -R ${ROLE}
+      set x
+    fi
+    echo "${current_time}|${current_context}|${ROLE}" > "$CONTEXT_FILE"
+  else
+    echo "Already connected to the correct GKE cluster ${GREEN}${GCP_CLUSTER_TYPE}-${ENV_REGION}-${GCP_REGION}${NC} under domain ${GREEN}${ATHENZ_DOMAIN}${NC} with role ${GREEN}${ROLE}${NC}. Cache expires in ${GREEN}$((${CONTEXT_EXPIRATION_SECONDS} - (current_time - last_connected_time))) seconds.${NC}"
+  fi
+}
+
+copy_configs(){
+  local DIR_TO_COPY=${1}
+  local POD_NAME=${2}
+  echo "Copying configuration files from $DIR_TO_COPY to pod $POD_NAME..."
+  find "$DIR_TO_COPY" -type f 2>/dev/null | while read file; do
+    # Skip files that start with an underscore
+    if [[ $(basename "$file") == _* ]]; then
+      echo "${YELLOW}Skipping $file${NC}"
+      continue
+    fi
+    # Calculate destination path by removing the prefix that includes $BUILD_TYPE
+    rel_path="${file#$DIR_TO_COPY/}"
+    kubectl cp "$file" "${POD_NAME}:/$rel_path"
+    echo "Copied $file to ${POD_NAME}:/$rel_path"
+  done
+}
+
+restart_server(){
+  CLEAR_LOGS=${1:-false}
+  LOG_PATH="/opt/yahoo/jedi/jedi_jetty/logs/server.log"
+  BACKUP_ZIP_PATH="${BACKUP_DIR}/../jedi_jetty_backup_$DATE.zip"
+  RESTART_MESSAGE="Server restart initiated from jedi gcp scripts"
+  START_SUCCESS_MESSAGE="Server - Started Server"
+  TIMEOUT=120
+  INTERVAL=5
+
+  kubectl exec ${SERVER_POD_NAME} -- bash -c "
+    supervisorctl stop jedi_jetty;
+    echo '$RESTART_MESSAGE' >> $LOG_PATH;
+
+    if [ \"$CLEAR_LOGS\" = true ]; then
+      echo 'Clearing server logs...';
+      [ -d $BACKUP_DIR ] && echo 'Backing up $BACKUP_DIR...' && zip -r $BACKUP_ZIP_PATH $BACKUP_DIR;
+      find $BACKUP_DIR -type f -exec rm -f {} +;
+    fi
+
+    supervisorctl start jedi_jetty;
+
+    echo 'Waiting for server to start...';
+    elapsed=0;
+    while [ \$elapsed -lt $TIMEOUT ]; do
+      restart_line=\$(grep -n '$RESTART_MESSAGE' $LOG_PATH 2>/dev/null | tail -n 1 | cut -d: -f1);
+      start_line=\$(grep -n '$START_SUCCESS_MESSAGE' $LOG_PATH 2>/dev/null | tail -n 1 | cut -d: -f1);
+
+      # Set restart_line to 0 if not found
+      restart_line=\${restart_line:-0};
+
+      if [ -n \"\$restart_line\" ] && [ -n \"\$start_line\" ] && [ \"\$start_line\" -gt \"\$restart_line\" ]; then
+        echo 'Server started successfully!';
+        exit 0;
+      fi
+
+      sleep $INTERVAL;
+      elapsed=\$((elapsed + $INTERVAL));
+      echo \"Found restart_line=\$restart_line, start_line=\$start_line ... (\$elapsed/$TIMEOUT seconds)\";
+    done
+
+    echo 'Timed out waiting for server to start!';
+    exit 1;
+  "
+}
+
+invoke_debug_change_on_server() {
+  POD_NAME=$1
+  DEFAULT_DEBUG_PORT=$2
+  SCRIPT_PATH=$3
+  echo "checking debug settings on server ..."
+  echo ""
+
+  local COMMANDS="cat ${SCRIPT_PATH} | grep suspend="
+
+  if [ "$CHANGE_DEBUG_TO" = "off" ]; then
+    echo ""
+    echo "disabling debug on $POD_TYPE pod ..."
+    COMMANDS="${COMMANDS}; sed -i '/suspend=[yn]/s/^[^#]/#&/' ${SCRIPT_PATH}"
+  elif [ "$CHANGE_DEBUG_TO" = "on" ]; then
+    echo ""
+    echo "enabling debug on $POD_TYPE pod ..."
+    COMMANDS="${COMMANDS}; sed -i '/suspend=[yn]/s/^#//' ${SCRIPT_PATH}"
+  fi
+
+  if [ "$CHANGE_SUSPEND_TO" != "LEAVE_AS_IS" ]; then
+    echo "setting debug suspend mode to $CHANGE_SUSPEND_TO ..."
+    COMMANDS="${COMMANDS}; sed -i 's/suspend=[yn]/suspend=${CHANGE_SUSPEND_TO}/g' ${SCRIPT_PATH}"
+  fi
+
+  if [ "$CHANGE_PORT_TO" != "LEAVE_AS_IS" ] || [ "$CHANGE_DEBUG_TO" = "on" ]; then
+    if [ "$CHANGE_PORT_TO" = "LEAVE_AS_IS" ]; then
+      CHANGE_PORT_TO=$DEFAULT_DEBUG_PORT
+    fi
+    echo "setting debug port to $CHANGE_PORT_TO ..."
+    COMMANDS="${COMMANDS}; sed -i 's/address=[0-9]\+\([,]\|\)/address=$CHANGE_PORT_TO\1/g' ${SCRIPT_PATH}"
+  fi
+
+  COMMANDS="${COMMANDS}; cat ${SCRIPT_PATH} | grep suspend="
+  kubectl exec ${POD_NAME} -- bash -c "${COMMANDS}"
+  echo ""
+}
+
+toggle_debug() {
+    if [ $# -lt 1 ]; then
+      print_usage
+      return 1
+    fi
+
+    CHANGE_DEBUG_TO="on" # on, off
+    CHANGE_SUSPEND_TO="LEAVE_AS_IS" # suspend=y, suspend=n or LEAVE_AS_IS
+    CHANGE_PORT_TO="LEAVE_AS_IS" # port number or LEAVE_AS_IS
+
+    for arg in "$@"; do
+      case "$arg" in
+        --help)
+          print_usage
+          return 0
+          ;;
+        --off)
+          CHANGE_DEBUG_TO="off"
+          ;;
+        --on)
+          CHANGE_DEBUG_TO="on"
+          ;;
+        --suspend=*)
+          CHANGE_SUSPEND_TO="${arg#*=}"
+          ;;
+        --port=*)
+          CHANGE_PORT_TO="${arg#*=}"
+          ;;
+        [[:alpha:]]*)
+          POD_TYPE=$arg
+          echo "Set POD_TYPE to $POD_TYPE"
+          ;;
+        *)
+          echo "${YELLOW}Skipping unknown argument: $arg${NC}"
+          ;;
+      esac
+    done
+
+    ROLE=gke.ns.power.user
+    change_context
+
+    if [ "$POD_TYPE" = "jws" ] || [ "$POD_TYPE" = "sync" ]; then
+      get_server_pod_info
+      invoke_debug_change_on_server "$SERVER_POD_NAME" 4080 "/opt/yahoo/jedi/jedi_jetty/bin/jedi_ws.sh"
+      restart_server false
+    elif [ "$POD_TYPE" = "qa" ]; then
+      get_qaclient_pod_info
+      if [ "$CHANGE_DEBUG_TO" = "off" ]; then
+        echo "debug off is not supported on qa. changing it to on and proceeding ..."
+        CHANGE_DEBUG_TO="on"
+      fi
+      invoke_debug_change_on_server "$QACLIENT_POD_NAME" 4081 "/scripts/run_test.sh"
+    else
+      echo "${RED}Please specify pod type${NC}"
+      exit 1
+    fi
+}
+
+get_build_settings(){
+  local POD_TYPE=$1
+  local MODULE_MAPPINGS_FILE="${FUNCTIONS_SCRIPT_DIR}/module_mappings.json"
+
+  if [ ! -f "$MODULE_MAPPINGS_FILE" ]; then
+    echo "${RED}ERROR: Module mappings file not found at ${MODULE_MAPPINGS_FILE}${NC}"
+    exit 1
+  fi
+
+  # First get all matching entries
+  local MATCHING_ENTRIES=$(jq -r --arg pod_type "$POD_TYPE" '[.[] | select(.aliases[] | . == $pod_type)]' "$MODULE_MAPPINGS_FILE")
+
+  # Check number of matches
+  local MATCH_COUNT=$(echo "$MATCHING_ENTRIES" | jq -r 'length')
+
+  if [ "$MATCH_COUNT" -eq 0 ]; then
+    # No matches found, use fallback
+    BUILD_TYPE=$POD_TYPE
+    LOCAL_DIR=$POD_TYPE
+    echo "Setting up for custom pod type: BUILD_TYPE=$BUILD_TYPE, LOCAL_DIR=$LOCAL_DIR"
+    return 0
+  elif [ "$MATCH_COUNT" -gt 1 ]; then
+    echo "${RED}ERROR: Multiple matches found for pod type '$POD_TYPE'. Please use a more specific alias.${NC}"
+    echo "Matching entries:"
+    echo "$MATCHING_ENTRIES" | jq -r '.[] | "- " + (.BUILD_TYPE // "unknown")'
+    exit 1
+  fi
+
+  # Use the single match
+  local FOUND_ENTRY=$(echo "$MATCHING_ENTRIES" | jq -r '.[0]')
+
+  BUILD_TYPE=$(echo "$FOUND_ENTRY" | jq -r '.BUILD_TYPE')
+  LOCAL_DIR=$(echo "$FOUND_ENTRY" | jq -r '.LOCAL_DIR')
+  ATHENZ_DOMAIN_CHECK=$(echo "$FOUND_ENTRY" | jq -r '.athenz_domain_check // empty')
+  echo "Setting up for $POD_TYPE: BUILD_TYPE=$BUILD_TYPE, LOCAL_DIR=$LOCAL_DIR"
+  if [ -n "$ATHENZ_DOMAIN_CHECK" ]; then
+    echo "ATHENZ_DOMAIN_CHECK=$ATHENZ_DOMAIN_CHECK"
+  fi
+}
+
+global_usage() {
+  echo
+  echo -e "${YELLOW}Global options:${NC}"
+  echo -e "  -h, --help         Display this help message"
+  echo -e "  --profile=<name>   Specify profile to use (default: from config or 'default')"
+  echo -e "  --user-name=NAME Set the username to NAME"
+  echo -e "  --x                Enable shell debugging (set -x)"
+  echo
+  echo -e "${YELLOW}Pod Types:${NC}"
+  echo -e "  jws                Web Service"
+  echo -e "  qa                 QA Client"
+  echo -e "  sync               Sync Service"
+  echo -e "  custom             Will work if artifactId in pom.xml name is the same as dir name"
+  echo
+}
+
+init() {
+  set -e
+  FUNCTIONS_SCRIPT_DIR="$(get_script_dir)"
+  CONTEXT_DIR="${FUNCTIONS_SCRIPT_DIR}/context"
+  CONTEXT_FILE="${CONTEXT_DIR}/gke_context_info"
+  K8S_GET_PODS_CONTEXT="${CONTEXT_DIR}/k8s_get_pods.json"
+  CONTEXT_EXPIRATION_SECONDS=1000
+  mkdir -p "$CONTEXT_DIR"
+
+  if [ -n "$GCP_SCRIPTS_RUN_TIMESTAMP" ]; then
+    echo "${RED}Error: GCP_SCRIPTS_RUN_TIMESTAMP is already set to $GCP_SCRIPTS_RUN_TIMESTAMP. Looks like scripts run itself${NC}"
+    export GCP_SCRIPTS_RUN_TIMESTAMP
+    exit 1
+  fi
+
+  GCP_SCRIPTS_RUN_TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+  export GCP_SCRIPTS_RUN_TIMESTAMP
+  # Parse for --profile parameter and --x parameter
+  PROFILE="default"
+  CONFIG_FILE="${FUNCTIONS_SCRIPT_DIR}/profiles/config"
+  ORIGINAL_ARGS=("$@")
+  ARGS=()
+
+  # Read profile from config file if it exists
+  if [ -f "$CONFIG_FILE" ]; then
+    PROFILE=$(cat "$CONFIG_FILE")
+  fi
+
+  # Override with command line arguments if provided
+  for arg in "$@"; do
+    if [[ $arg == "-h" || $arg == "--help" ]]; then
+      global_usage
+      print_usage
+      exit 0
+    elif [[ $arg == --profile=* ]]; then
+      PROFILE="${arg#*=}"
+      echo "Set PROFILE to $PROFILE"
+    elif [[ $arg == --user-name=* ]]; then
+      USER_NAME="${arg#*=}"
+      echo "Set USER_NAME to $USER_NAME"
+    elif [[ $arg == --x ]]; then
+      set -x
+      echo "Enabled shell debugging (set -x)"
+    elif [[ "$arg" =~ ^[[:alpha:]] ]]; then
+      POD_TYPE=$arg
+      echo "Set POD_TYPE to $POD_TYPE"
+    else
+      ARGS+=("$arg")
+      echo "${YELLOW}Added to ARGS: $arg${NC}"
+    fi
+  done
+
+  echo "${GREEN}Arguments processed. POD_TYPE=$POD_TYPE${NC}"
+
+  get_build_settings "$POD_TYPE"
+
+  GLOBAL_PROFILE="${FUNCTIONS_SCRIPT_DIR}/profiles/profile"
+  PROFILE_DIR="${FUNCTIONS_SCRIPT_DIR}/profiles/${PROFILE}"
+  PROFILE_PATH="${PROFILE_DIR}/profile"
+
+  source "$GLOBAL_PROFILE"
+
+  # Verify profile directory exists
+  if [ ! -d "$PROFILE_DIR" ]; then
+    echo "${RED}Error: Profile '${PROFILE}' not found at ${PROFILE_DIR}${NC}"
+    exit 1
+  fi
+
+  # Source the profile if it exists
+  if [ -f "$PROFILE_PATH" ]; then
+    source "$PROFILE_PATH"
+  else
+    echo "${RED}Profile file '${PROFILE_PATH}' not found. use set_profile first. Exiting.${NC}"
+    exit 1
+  fi
+
+  if [ -z "$USER_NAME" ]; then
+    USER_NAME=$(whoami)
+    echo "USER_NAME=$USER_NAME"
+  fi
+}
+
+check_if_pod_type_is_in_line_with_domain(){
+  echo "Checking if domain '$ATHENZ_DOMAIN' contains expected pattern..."
+
+  if [ -n "$ATHENZ_DOMAIN_CHECK" ]; then
+    # Use the ATHENZ_DOMAIN_CHECK pattern from the module mapping
+    if [[ "$ATHENZ_DOMAIN" != *"$ATHENZ_DOMAIN_CHECK"* ]]; then
+      echo "${YELLOW}⚠️  WARNING: Domain $ATHENZ_DOMAIN does not contain expected pattern $ATHENZ_DOMAIN_CHECK"
+      echo "This may indicate a mismatch between your selected profile and pod type.${NC}"
+      read -p "Do you want to proceed anyway? (y/n): " PROCEED
+      if [[ ! "$PROCEED" =~ ^[Yy]$ ]]; then
+        echo "Exiting as requested."
+        exit 1
+      else
+        echo "Proceeding despite domain pattern mismatch..."
+      fi
+    else
+      echo "Domain check passed: '$ATHENZ_DOMAIN' contains pattern '$ATHENZ_DOMAIN_CHECK'"
+    fi
+  else
+    echo "No domain pattern check defined for this pod type. Skipping domain verification."
+  fi
+}
+
+update_hosts_file() {
+  local pod_name=$1
+  local server_ip_to_add=$2
+  local dns_list_space_separated=$3
+
+  kubectl exec ${pod_name} -- bash -c "
+    if grep -q \"${dns_list_space_separated}\" /etc/hosts; then
+      # Create a temporary file with the updated content
+      grep -v \"${dns_list_space_separated}\" /etc/hosts > /tmp/hosts.new
+      echo \"${server_ip_to_add}  ${dns_list_space_separated}\" >> /tmp/hosts.new
+      # Replace the original file
+      cat /tmp/hosts.new > /etc/hosts
+      rm /tmp/hosts.new
+    else
+      # Entry doesn't exist - append it
+      echo \"${server_ip_to_add}  ${dns_list_space_separated}\" >> /etc/hosts
+    fi
+    echo 'Updated hosts file:' && cat /etc/hosts
+  "
+}
+
+set_qa_log_level() {
+  local pod_name=$1
+  local log_level=$2
+  echo ""
+  echo "setting log level to $log_level ..."
+  kubectl exec ${pod_name} -- bash -c "sed -i '/<root level/i \
+    <logger name=\"org.apache.http.wire\" additivity=\"false\" level=\"$log_level\">\
+       <appender-ref ref=\"ASYNC\" />\
+    </logger>' /opt/yahoo/jedi/ymail_xmas_qa/conf/logback.xml"
+}
+
+deploy_server(){
+  local DEPLOY_RPM_RESTART_SERVER="";
+  get_server_pod_info
+  echo "Deploying serv-api ..."
+  if [ "$CONFIG_ONLY" = "true" ]; then
+    echo ""
+    echo "${GREEN}Config-only mode: Skipping RPM installation${NC}"
+    echo ""
+  else
+    find_and_copy_rpm ${SERVER_POD_NAME}
+    echo ""
+    echo "Stopping jetty server, removing old RPMs, uninstalling old app, and installing new RPM..."
+    DEPLOY_RPM_RESTART_SERVER="
+      supervisorctl stop jedi_jetty;
+      find /tmp -type f -name '${BUILD_TYPE}*.rpm' ! -name '${RPM_FILE_NAME}' -exec rm -f {} +;
+      yum remove ${BUILD_TYPE} -y;
+      yum localinstall -y --disablerepo=* /tmp/${RPM_FILE_NAME};
+    "
+  fi
+
+  echo ""
+  echo "set logging level to $LOG_LEVEL ..."
+  kubectl exec ${SERVER_POD_NAME} -- bash -c "${DEPLOY_RPM_RESTART_SERVER}
+    echo 'Setting log level to $LOG_LEVEL in /opt/yahoo/jedi/${BUILD_TYPE}/conf/logback.xml';
+    sed -i '/<root level/i \
+  <logger name=\"com.yahoo.mail.cmd.util\" additivity=\"false\" level=\"$LOG_LEVEL\">\
+     <appender-ref ref=\"ASYNC\" />\
+  </logger>\
+  <logger name=\"com.yahoo.mail.cmd.api\" additivity=\"false\" level=\"$LOG_LEVEL\">\
+     <appender-ref ref=\"ASYNC\" />\
+  </logger>' /opt/yahoo/jedi/${BUILD_TYPE}/conf/logback.xml;
+    echo 'Setting log level to DEBUG for org.apache.http.wire in /opt/yahoo/jedi/${BUILD_TYPE}/conf/logback.xml';
+    sed -i 's|<logger name=\"org.apache.http.wire\" additivity=\"false\" level=\"[^\"]*\">|<logger name=\"org.apache.http.wire\" additivity=\"false\" level=\"DEBUG\">|' /opt/yahoo/jedi/${BUILD_TYPE}/conf/logback.xml
+  "
+
+  copy_configs $PROFILE_DIR/files/$BUILD_TYPE $SERVER_POD_NAME
+
+  if [ "$CONFIG_ONLY" != "true" ]; then
+    echo ""
+    echo "starting jetty ..."
+    kubectl exec ${SERVER_POD_NAME} -- bash -c "supervisorctl start jedi_jetty;"
+  fi
+}
+
+find_and_copy_rpm(){
+  local POD_NAME=$1
+  local RPM_FILE_PATH=$(find ${PATH_TO_JEDI}/${LOCAL_DIR}/target/rpm/${BUILD_TYPE}/RPMS/x86_64 -name "*.x86_64.rpm" | head -n 1)
+  if [ -z "$RPM_FILE_PATH" ]; then
+    echo "${RED}ERROR: No RPM file found in the specified directory. Exiting.${NC}"
+    exit 1
+  fi
+  RPM_FILE_NAME=$(basename "$RPM_FILE_PATH")
+  push_to_pod "${PATH_TO_JEDI}/${LOCAL_DIR}/target/rpm/${BUILD_TYPE}/RPMS/x86_64/${RPM_FILE_NAME}" "${POD_NAME}" "/tmp/"
+}
+
+deploy_qa(){
+  echo "Deploying qaclient ..."
+  get_server_pod_info
+  get_qaclient_pod_info
+
+  if [ "$CONFIG_ONLY" = "true" ]; then
+    echo ""
+    echo "${GREEN}Config-only mode: Skipping RPM installation${NC}"
+  else
+    find_and_copy_rpm ${QACLIENT_POD_NAME}
+    echo "RPM_FILE_NAME: ${RPM_FILE_NAME}"
+    echo "removing old RPMs except the new one, uninstalling old app, and installing new app..."
+    kubectl exec ${QACLIENT_POD_NAME} -- bash -c "
+      find /tmp -type f -name '${BUILD_TYPE}*.rpm' ! -name '${RPM_FILE_NAME}' -exec rm -f {} +;
+      yum remove ymail_xmas_qa -y;
+      yum localinstall -y --disablerepo=* /tmp/$RPM_FILE_NAME;
+    "
+  fi
+
+  set_qa_log_level "${QACLIENT_POD_NAME}" "$LOG_LEVEL"
+  update_hosts_file "${QACLIENT_POD_NAME}" "${SERVER_POD_IP}" "${SERVER_POD_DNS_NAME}"
+  copy_configs $PROFILE_DIR/files/$BUILD_TYPE $QACLIENT_POD_NAME
+}
+
+build_with_scope() {
+  local build_scope=$1
+  echo "${YELLOW}Building: mvn clean -s linux_mac_settings.xml install $build_scope${NC}"
+  mvn clean -s linux_mac_settings.xml install $build_scope
+  if [ $? -ne 0 ]; then
+    echo "Build failed."
+    exit 1
+  fi
+}
+
+assemble_rpm() {
+  local BUILD_MODULE_OR_FULL=""
+  if [ "$BUILD_TYPE" != "full" ] && [ -n "$BUILD_TYPE" ]; then
+      BUILD_MODULE_OR_FULL="-pl :$BUILD_TYPE"
+  fi
+  mvn rpm:rpm $BUILD_MODULE_OR_FULL
+}
+
+build(){
+  RESUME=""
+  # Default to running tests
+  RUN_TESTS_OR_NOT=""
+  SKIP_CHECKSTYLE=""
+  for arg in "${ARGS[@]}"; do
+    case $arg in
+      "-h" | "--help") print_usage ;;
+      "--exclude-tests" | "-et") RUN_TESTS_OR_NOT="-DskipTests=true" ;;
+      "--skip-checkstyle" | "-sc") SKIP_CHECKSTYLE="-Dcheckstyle.skip" ;;
+      --resume-from=*) RESUME="${arg#*=}" ;;
+      *) echo "Unknown option: $arg"; print_usage ;;
+    esac
+  done
+  if [ "$BUILD_TYPE" != "full" ]; then
+      check_if_pod_type_is_in_line_with_domain
+  fi
+  local BUILD_MODULE_OR_FULL=""
+  if [ "$BUILD_TYPE" != "full" ] && [ -n "$BUILD_TYPE" ]; then
+      BUILD_MODULE_OR_FULL="-pl :$BUILD_TYPE"
+  fi
+  build_with_scope "-Pcommit -T 1C $RUN_TESTS_OR_NOT $BUILD_MODULE_OR_FULL $SKIP_CHECKSTYLE -am ${RESUME:+-rf :$RESUME}"
+}

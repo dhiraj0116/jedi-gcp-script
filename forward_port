@@ -1,0 +1,45 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+  echo -e "${GREEN}Usage: $(basename $0) [POD_TYPE] [OPTIONS]${NC}"
+  echo
+  echo -e "${GREEN}Forward local ports to remote pod services${NC}"
+  echo
+  echo -e "${GREEN}Arguments:${NC}"
+  echo -e "  POD_TYPE              Pod type to connect to (jws, qa, sync)"
+  echo
+  echo -e "${GREEN}Options:${NC}"
+  echo -e "  -h, --help            Display this help message"
+  echo
+  echo -e "${GREEN}Examples:${NC}"
+  echo -e "  $(basename $0) qa     Forward port 4081 from QA client pod"
+  echo -e "  $(basename $0) jws    Forward port 4080 from JWS pod"
+}
+
+init "$@"
+ROLE=gke.ns.debug.user
+change_context
+
+if [ "$POD_TYPE" = "qa" ]; then
+  get_qaclient_pod_info
+  if [ -n "$QACLIENT_POD_NAME" ]; then
+    kubectl port-forward $QACLIENT_POD_NAME 4081:4081 --address 0.0.0.0
+  else
+    echo "${RED}No QA client pod found.${NC}"
+    exit 1
+  fi
+elif [ "$POD_TYPE" = "jws" ] || [ "$POD_TYPE" = "sync" ]; then
+  get_server_pod_info
+  if [ -n "$SERVER_POD_NAME" ]; then
+    kubectl port-forward $SERVER_POD_NAME 4080:4080 --address 0.0.0.0
+  else
+    echo "${RED}No server pod found.${NC}"
+    exit 1
+  fi
+else
+  echo "${RED}Invalid pod type: $POD_TYPE${NC}"
+  print_usage
+  exit 1
+fi

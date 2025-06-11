@@ -1,0 +1,28 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source ./common/functions
+
+print_usage() {
+    echo -e "${GREEN}Usage: toggle_debug POD_TYPE [OPTIONS]${NC}"
+    echo
+    echo -e "${GREEN}Toggle debug mode for specified pod type${NC}"
+    echo
+    echo -e "${GREEN}Arguments:${NC}"
+    echo -e "  POD_TYPE                  Pod type (jws, sync, qa)"
+    echo
+    echo -e "${GREEN}Options:${NC}"
+    echo -e "  --on                      Enable debug mode (default)"
+    echo -e "  --off                     Disable debug mode (not supported for qa)"
+    echo -e "  --suspend=y|n             Set suspend option (y=suspend on startup, n=no suspend)"
+    echo -e "  --port=NUMBER             Set debug port number"
+    echo -e "  --help                    Display this help message"
+    echo
+    echo -e "${GREEN}Examples:${NC}"
+    echo -e "  toggle_debug jws          Enable debug on JWS pod with default settings"
+    echo -e "  toggle_debug sync --off   Disable debug on sync pod"
+    echo -e "  toggle_debug qa --suspend=n --port=5005"
+    exit 0
+}
+
+init "$@"
+toggle_debug $ARGS

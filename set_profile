@@ -1,0 +1,54 @@
+#!/bin/bash
+SCRIPT_DIR="$(dirname "$0")"
+source ${SCRIPT_DIR}/common/no_profile_functions
+cd "$SCRIPT_DIR"
+CONFIG_FILE="./common/profiles/config"
+
+print_usage() {
+ echo -e "${GREEN}Usage: $(basename $0) PROFILE_NAME${NC}"
+ echo
+ echo -e "${GREEN}Set the active profile configuration${NC}"
+ echo
+ echo -e "${GREEN}Arguments:${NC}"
+ echo -e "  PROFILE_NAME          Name of the profile to set as active"
+ echo
+ echo -e "${GREEN}Options:${NC}"
+ echo -e "  -h, --help            Display this help message"
+ echo
+ echo -e "${GREEN}Description:${NC}"
+ echo -e "  - Sets the specified profile as the active configuration"
+ echo -e "  - Profile must exist in the ./common/profiles/ directory"
+ echo -e "  - Changes the kubectl context based on the new profile"
+ echo
+ echo -e "${GREEN}Examples:${NC}"
+ echo -e "  $(basename $0) jws-west1    Set 'jws-west1' as the active profile"
+ echo -e "  $(basename $0) sync-east5   Set 'sync-east5' as the active profile"
+}
+
+# Check if any parameter is a help flag
+for param in "$@"; do
+ if [[ "$param" == "--help" || "$param" == "-h" ]]; then
+   print_usage
+   exit 0
+ fi
+done
+
+# Check if profile argument is provided
+if [ -z "$1" ]; then
+ echo "Error: Profile name required"
+ echo "Usage: $(basename "$0") profile_name"
+ exit 1
+fi
+
+# Check if the specified profile exists
+if [ ! -d "./common/profiles/$1" ]; then
+ echo "Error: Profile '$1' does not exist"
+ exit 1
+fi
+
+# Store the profile name in config file
+echo "$1" > "$CONFIG_FILE"
+
+echo "Profile set to '$1'"
+
+change_context --force
